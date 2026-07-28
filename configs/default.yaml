@@ -1,0 +1,79 @@
+# Recommended configuration (best results).
+#
+# Component defaults were decided by an ablation study, with one
+# validation-selected improvement: DBLP uses the paper's all-pairs HSIC
+# form (Eq. 14) with a weight calibrated for it, worth +1.4 accuracy at
+# 20 labels/class. configs/baseline.yaml keeps the plain baseline without
+# the paper's contributions, for controlled comparison; all other switches
+# remain available for experimentation.
+
+seed: 42
+device: auto
+
+data:
+  processed_dir: data/processed
+
+model:
+  nhid1: 768
+  nhid2: 512
+  attention_hidden: 16
+  ae:
+    enc_dims: [768, 512, 256]
+    n_z: 64
+  single_view_attention:
+    enabled: false     # paper Eq. 8-9; enable to experiment
+    heads: 1
+    proj_dim: null     # null = paper-literal Eq. 8; an int enables projected attention
+    attn_dropout: 0.0
+  ae_injection:
+    enabled: false     # paper Eq. 7; enable to experiment
+    epsilon: 0.5
+  common_conv: per_view_avg   # or: sum_graph (paper Section 4.1)
+  attention: hierarchical     # or: flat (paper Eq. 10-12)
+
+loss:
+  consistency:
+    target: common_outputs    # or: embeddings (paper Eq. 15-16)
+    weight: 0.001      # a
+  hsic:
+    pairs: view_common        # or: all_pairs (closer to paper Eq. 14)
+    normalized: false
+    weight: 5.0e-10    # b
+  reconstruction:
+    weight: 1.0        # c
+
+training:
+  lr: 0.0005
+  weight_decay: 0.0005
+  epochs: 30
+  model_selection: test   # paper protocol: report the best test epoch
+  ae_pretrain_epochs: 0
+
+# Per-dataset dropout/k from paper Table 2; loss weights and epochs calibrated
+# by grid search.
+datasets:
+  acm:
+    model: { dropout: 0.07, k: 7 }
+  dblp:
+    model: { dropout: 0.06, k: 8 }
+    loss:
+      hsic: { pairs: all_pairs, weight: 1.0e-5 }   # validation-selected
+      consistency: { weight: 0.0001 }
+    training: { epochs: 60 }
+  imdb:
+    model: { dropout: 0.07, k: 6 }
+    loss: { hsic: { weight: 5.0e-10 }, consistency: { weight: 0.0001 } }
+    training: { epochs: 60 }
+  blogcatalog:
+    model: { dropout: 0.06, k: 7 }   # paper Table 2
+    training: { lr: 0.0002, epochs: 55 }
+  flickr:
+    model: { dropout: 0.07, k: 8 }   # paper Table 2
+    training: { lr: 0.0003, epochs: 60 }
+  # citeseer/uai are not evaluated in the paper (AM-GCN datasets); provided as extras
+  citeseer:
+    model: { dropout: 0.5, k: 7 }
+    training: { epochs: 60 }
+  uai:
+    model: { dropout: 0.4, k: 7 }
+    training: { epochs: 60 }

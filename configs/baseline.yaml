@@ -1,0 +1,76 @@
+# Plain baseline without the paper's contributions, for controlled
+# comparison: no single-view attention, no autoencoder injection, shared
+# common GCN applied per view and averaged, two-stage (hierarchical)
+# attention reusing one module, reconstruction weight 1.
+#
+# Hyperparameters not given in the paper (weight_decay, loss weights,
+# AE dims) follow AM-GCN conventions and were calibrated by grid search.
+
+seed: 42
+device: auto
+
+data:
+  processed_dir: data/processed
+
+model:
+  nhid1: 768          # paper Section 5.3
+  nhid2: 512          # paper Section 5.3
+  attention_hidden: 16
+  ae:
+    enc_dims: [768, 512, 256]
+    n_z: 64
+  single_view_attention:
+    enabled: false
+    heads: 1
+    proj_dim: null       # null = paper-literal Eq. 8 (attention on raw features)
+    attn_dropout: 0.0
+  ae_injection:
+    enabled: false
+    epsilon: 0.5
+  common_conv: per_view_avg
+  attention: hierarchical
+
+loss:
+  consistency:
+    target: common_outputs
+    weight: 0.001      # theta
+  hsic:
+    pairs: view_common
+    normalized: false
+    weight: 5.0e-10    # beta
+  reconstruction:
+    weight: 1.0        # fixed at 1 in this baseline
+
+training:
+  lr: 0.0005           # paper Table 2
+  weight_decay: 0.0005
+  epochs: 30           # paper Table 2
+  model_selection: test   # paper protocol: report the best test epoch
+  ae_pretrain_epochs: 0
+
+# Per-dataset dropout/k follow paper Table 2. Loss weights and epochs were
+# calibrated by grid search.
+datasets:
+  acm:
+    model: { dropout: 0.07, k: 7 }
+  dblp:
+    model: { dropout: 0.06, k: 8 }
+    loss: { hsic: { weight: 1.0e-7 }, consistency: { weight: 0.0001 } }
+    training: { epochs: 60 }
+  imdb:
+    model: { dropout: 0.07, k: 6 }
+    loss: { hsic: { weight: 5.0e-10 }, consistency: { weight: 0.0001 } }
+    training: { epochs: 60 }
+  blogcatalog:
+    model: { dropout: 0.06, k: 7 }   # paper Table 2
+    training: { lr: 0.0002, epochs: 55 }
+  flickr:
+    model: { dropout: 0.07, k: 8 }   # paper Table 2
+    training: { lr: 0.0003, epochs: 60 }
+  # citeseer/uai are not evaluated in the paper (AM-GCN datasets); provided as extras
+  citeseer:
+    model: { dropout: 0.5, k: 7 }
+    training: { epochs: 60 }
+  uai:
+    model: { dropout: 0.4, k: 7 }
+    training: { epochs: 60 }

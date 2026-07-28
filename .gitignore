@@ -1,0 +1,25 @@
+# Paper PDF (local reference only, never committed)
+MVMA-GCN.pdf
+
+# Data (distributed via GitHub Release, see data/README.md)
+data/raw/
+data/processed/
+*.7z
+*.tar.gz
+
+# Experiment outputs
+outputs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

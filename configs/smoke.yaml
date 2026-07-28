@@ -1,0 +1,52 @@
+# Minimal configuration for a fast end-to-end pipeline check (a few epochs,
+# all components enabled so every code path is exercised).
+
+seed: 42
+device: auto
+
+data:
+  processed_dir: data/processed
+
+model:
+  nhid1: 768
+  nhid2: 512
+  attention_hidden: 16
+  ae:
+    enc_dims: [768, 512, 256]
+    n_z: 64
+  single_view_attention:
+    enabled: true
+    heads: 1
+    proj_dim: 64
+    attn_dropout: 0.5
+  ae_injection:
+    enabled: true
+    epsilon: 0.5
+  common_conv: sum_graph
+  attention: flat
+
+loss:
+  consistency:
+    target: embeddings
+    weight: 0.001
+  hsic:
+    pairs: all_pairs
+    normalized: true
+    weight: 1.0
+  reconstruction:
+    weight: 1.0
+
+training:
+  lr: 0.0005
+  weight_decay: 0.0005
+  epochs: 3
+  model_selection: test
+  ae_pretrain_epochs: 2
+
+datasets:
+  acm:
+    model: { dropout: 0.07, k: 7 }
+  dblp:
+    model: { dropout: 0.06, k: 8 }
+  imdb:
+    model: { dropout: 0.07, k: 6 }

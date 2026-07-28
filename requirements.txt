@@ -1,0 +1,7 @@
+# PyTorch is installed separately with a CUDA-specific index, see scripts/setup_env.sh:
+#   pip3 install torch --index-url https://download.pytorch.org/whl/cu132
+# (replace cu132 with cpu for a CPU-only install)
+numpy==2.4.4
+scipy==1.18.0
+scikit-learn==1.9.0
+PyYAML==6.0.3
